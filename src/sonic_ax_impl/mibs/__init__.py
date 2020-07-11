@@ -190,9 +190,6 @@ def init_sync_d_interface_tables(db_conn):
     :return: tuple(if_name_map, if_id_map, oid_map, if_alias_map)
     """
 
-    # Make sure we're connected to COUNTERS_DB
-    db_conn.connect(COUNTERS_DB)
-
     # { if_name (SONiC) -> sai_id }
     # ex: { "Ethernet76" : "1000000000023" }
     if_name_map, if_id_map = port_util.get_interface_oid_map(db_conn)
@@ -232,7 +229,6 @@ def init_sync_d_interface_tables(db_conn):
                        .format(port_util.SONIC_ETHERNET_RE_PATTERN))
         logger.warning("Port name map:\n" + pprint.pformat(if_name_map, indent=2))
 
-    db_conn.connect(APPL_DB)
 
     if_alias_map = dict()
 
@@ -259,7 +255,6 @@ def init_sync_d_lag_tables(db_conn):
     # { OID -> lag_name (SONiC) }
     oid_lag_name_map = {}
 
-    db_conn.connect(APPL_DB)
 
     lag_entries = db_conn.keys(APPL_DB, b"LAG_TABLE:*")
 
@@ -293,9 +288,6 @@ def init_sync_d_queue_tables(db_conn):
     Initializes queue maps for SyncD-connected MIB(s).
     :return: tuple(port_queues_map, queue_stat_map)
     """
-
-    # Make sure we're connected to COUNTERS_DB
-    db_conn.connect(COUNTERS_DB)
 
     # { Port index : Queue index (SONiC) -> sai_id }
     # ex: { "1:2" : "1000000000023" }
@@ -457,7 +449,14 @@ class Namespace:
             db = SonicV2Connector(use_unix_socket_path=True, namespace=namespace)
             db_conn.append(db)
 
+        Namespace.connect_namespace_dbs(db_conn)
         return db_conn
+
+    @staticmethod
+    def connect_namespace_dbs(dbs):
+        list_of_dbs = [APPL_DB, COUNTERS_DB, CONFIG_DB, STATE_DB, ASIC_DB, SNMP_OVERLAY_DB]
+        for db_name in list_of_dbs:
+            Namespace.connect_all_dbs(dbs, db_name)
 
     @staticmethod
     def connect_all_dbs(dbs, db_name):
@@ -471,7 +470,6 @@ class Namespace:
         """
         result_keys=[]
         for db_conn in dbs:
-            db_conn.connect(db_name)
             keys = db_conn.keys(db_name, pattern)
             if keys is not None:
                 result_keys.extend(keys)
@@ -483,12 +481,18 @@ class Namespace:
         db get_all function executed on global and all namespace DBs.
         """
         result = {}
+        # If there are multiple namespaces, _hash might not be 
+        # present in all namespace, ignore if not present in a
+        # specfic namespace.
+        if len(dbs) > 1:
+            tmp_kwargs = kwargs.copy()
+            tmp_kwargs['blocking'] = False
+        else:
+            tmp_kwargs = kwargs
         for db_conn in dbs:
-            db_conn.connect(db_name)
-            if(db_conn.exists(db_name, _hash)):
-                ns_result = db_conn.get_all(db_name, _hash, *args, **kwargs)
-                if ns_result is not None:
-                    result.update(ns_result)
+            ns_result = db_conn.get_all(db_name, _hash, *args, **tmp_kwargs)
+            if ns_result is not None:
+                result.update(ns_result)
         return result
 
     @staticmethod
@@ -520,6 +524,7 @@ class Namespace:
         Ignore first global db to get interface tables if there
         are multiple namespaces.
         """
+        Namespace.connect_namespace_dbs(dbs)
         for db_conn in Namespace.get_non_host_dbs(dbs):
             if_name_map_ns, \
             if_alias_map_ns, \
@@ -547,6 +552,7 @@ class Namespace:
         Ignore first global db to get lag tables if
         there are multiple namespaces.
         """
+        Namespace.connect_namespace_dbs(dbs)
         for db_conn in Namespace.get_non_host_dbs(dbs):
             lag_name_if_name_map_ns, \
             if_name_lag_name_map_ns, \
@@ -554,7 +560,7 @@ class Namespace:
             lag_name_if_name_map.update(lag_name_if_name_map_ns)
             if_name_lag_name_map.update(if_name_lag_name_map_ns)
             oid_lag_name_map.update(oid_lag_name_map_ns)
-
+        
         return lag_name_if_name_map, if_name_lag_name_map, oid_lag_name_map
 
     @staticmethod
@@ -569,6 +575,7 @@ class Namespace:
         Ignore first global db to get queue tables if there
         are multiple namespaces.
         """
+        Namespace.connect_namespace_dbs(dbs)
         for db_conn in Namespace.get_non_host_dbs(dbs):
             port_queues_map_ns, \
             queue_stat_map_ns, \
