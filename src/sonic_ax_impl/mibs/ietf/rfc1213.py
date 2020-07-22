@@ -153,7 +153,7 @@ class InterfacesUpdater(MIBUpdater):
 
     def __init__(self):
         super().__init__()
-        self.db_conn = Namespace.init_namespace_dbs() 
+        self.db_conn = Namespace.init_namespace_dbs()
 
         self.lag_name_if_name_map = {}
         self.if_name_lag_name_map = {}
@@ -195,7 +195,7 @@ class InterfacesUpdater(MIBUpdater):
         """
         for sai_id_key in self.if_id_map:
             namespace, sai_id = mibs.split_sai_id_key(sai_id_key)
-            if_idx = get_index_from_str(self.if_id_map[sai_id_key].decode())
+            if_idx = mibs.get_index_from_str(self.if_id_map[sai_id_key])
             self.if_counters[if_idx] = self.namespace_db_map[namespace].get_all(mibs.COUNTERS_DB, \
                     mibs.counter_table(sai_id), blocking=True)
 
