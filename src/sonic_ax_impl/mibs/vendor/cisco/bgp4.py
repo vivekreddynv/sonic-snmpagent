@@ -3,6 +3,7 @@ from bisect import bisect_right
 from sonic_ax_impl import mibs
 from ax_interface import MIBMeta, ValueType, MIBUpdater, SubtreeMIBEntry
 from ax_interface.mib import MIBEntry
+from ax_interface.util import ip2byte_tuple
 from sonic_ax_impl.mibs import Namespace
 import ipaddress
 
@@ -45,7 +46,7 @@ class BgpSessionUpdater(MIBUpdater):
                     oid_head = (1, 4)
                 else:
                     oid_head = (2, 16)
-                oid_ip = tuple(i for i in ip.packed)
+                oid_ip = ip2byte_tuple(neigh_str)
 
                 if state.isdigit():
                     status = 6
