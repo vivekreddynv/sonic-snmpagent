@@ -150,7 +150,7 @@ class NextHopUpdater(MIBUpdater):
             ipnstr = routestr[len("ROUTE_TABLE:"):]
             if ipnstr == "0.0.0.0/0":
                 ipn = ipaddress.ip_network(ipnstr)
-                ent = Namespace.dbs_get_all(self.db_conn, mibs.APPL_DB, routestr, blocking=True)
+                ent = Namespace.dbs_get_all(self.db_conn, mibs.APPL_DB, routestr, blocking=False)
                 nexthops = ent["nexthop"]
                 for nh in nexthops.split(','):
                     # TODO: if ipn contains IP range, create more sub_id here
@@ -229,7 +229,7 @@ class InterfacesUpdater(MIBUpdater):
             namespace, sai_id = mibs.split_sai_id_key(sai_id_key)
             if_idx = mibs.get_index_from_str(self.if_id_map[sai_id_key])
             self.if_counters[if_idx] = self.namespace_db_map[namespace].get_all(mibs.COUNTERS_DB, \
-                    mibs.counter_table(sai_id), blocking=True)
+                    mibs.counter_table(sai_id), blocking=False)
 
         self.lag_name_if_name_map, \
         self.if_name_lag_name_map, \
@@ -357,7 +357,7 @@ class InterfacesUpdater(MIBUpdater):
         else:
             return None
 
-        return Namespace.dbs_get_all(self.db_conn, db, if_table, blocking=True)
+        return Namespace.dbs_get_all(self.db_conn, db, if_table, blocking=False)
 
     def _get_if_entry_state_db(self, sub_id):
         """

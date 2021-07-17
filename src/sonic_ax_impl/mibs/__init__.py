@@ -224,7 +224,7 @@ def init_mgmt_interface_tables(db_conn):
     if_alias_map = dict()
 
     for if_name in oid_name_map.values():
-        if_entry = db_conn.get_all(CONFIG_DB, mgmt_if_entry_table(if_name), blocking=True)
+        if_entry = db_conn.get_all(CONFIG_DB, mgmt_if_entry_table(if_name), blocking=False)
         if_alias_map[if_name] = if_entry.get('alias', if_name)
 
     logger.debug("Management alias map:\n" + pprint.pformat(if_alias_map, indent=2))
@@ -283,7 +283,7 @@ def init_sync_d_interface_tables(db_conn):
     if_alias_map = dict()
 
     for if_name in if_name_map:
-        if_entry = db_conn.get_all(APPL_DB, if_entry_table(if_name), blocking=True)
+        if_entry = db_conn.get_all(APPL_DB, if_entry_table(if_name), blocking=False)
         if_alias_map[if_name] = if_entry.get('alias', if_name)
 
     logger.debug("Chassis name map:\n" + pprint.pformat(if_alias_map, indent=2))
@@ -353,7 +353,7 @@ def init_sync_d_queue_tables(db_conn):
 
     # { Port name : Queue index (SONiC) -> sai_id }
     # ex: { "Ethernet0:2" : "1000000000023" }
-    queue_name_map = db_conn.get_all(COUNTERS_DB, COUNTERS_QUEUE_NAME_MAP, blocking=True)
+    queue_name_map = db_conn.get_all(COUNTERS_DB, COUNTERS_QUEUE_NAME_MAP, blocking=False)
     logger.debug("Queue name map:\n" + pprint.pformat(queue_name_map, indent=2))
 
     # Parse the queue_name_map and create the following maps:
