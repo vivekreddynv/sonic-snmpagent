@@ -555,7 +555,7 @@ class LLDPRemManAddrUpdater(MIBUpdater):
         Listen to updates in APP DB, update local cache
         """
         event_cache = get_latest_notification(pubsub)
-        for interface in event_cache.keys():
+        for interface in event_cache:
             data = event_cache[interface][0]
             if_index = event_cache[interface][1]
             
